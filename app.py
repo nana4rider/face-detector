@@ -18,30 +18,30 @@ def detect_face_in_center(image_data, params):
         print("入力画像を読み込めませんでした。")
         return {"error": "入力画像を読み込めませんでした。"}, 400
 
-    # 中央部分の固定座標
+    # 切り抜き範囲
     img_height, img_width = image.shape[:2]
-    x1 = int(params.get("x1", 0))
-    y1 = int(params.get("y1", 0))
-    x2 = int(params.get("x2", img_width))
-    y2 = int(params.get("y2", img_height))
+    x1 = int(params.get("x1", 0) or 0)
+    y1 = int(params.get("y1", 0) or 0)
+    x2 = int(params.get("x2", img_width) or img_width)
+    y2 = int(params.get("y2", img_height) or img_height)
 
-    # 中央部分を切り抜き
+    # 指定範囲を切り抜き
     center_image = image[y1:y2, x1:x2]
 
     # グレースケールに変換
     gray = cv2.cvtColor(center_image, cv2.COLOR_BGR2GRAY)
 
     # 顔検出パラメータ
-    scaleFactor = float(params.get("scaleFactor", 1.1))
-    minNeighbors = int(params.get("minNeighbors", 2))
-    minSize = int(params.get("minSize", 80))
+    scaleFactor = float(params.get("scaleFactor") or 1.1)
+    minNeighbors = int(params.get("minNeighbors") or 2)
+    minSize = int(params.get("minSize") or 80)
 
     # 顔を検出
     faces = face_cascade.detectMultiScale(gray, scaleFactor=scaleFactor, minNeighbors=minNeighbors, minSize=(minSize, minSize))
 
     if len(faces) == 0:
-        print("中央部分に顔が検出されませんでした。")
-        return {"error": "中央部分に顔が検出されませんでした。"}, 404
+        print("顔が検出されませんでした。")
+        return {"error": "顔が検出されませんでした。"}, 404
 
     # 最大の顔を見つける
     largest_face = None
