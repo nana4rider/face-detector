@@ -1,4 +1,4 @@
-name: Release
+name: Deploy
 
 on:
   push:
@@ -28,7 +28,7 @@ jobs:
           echo "previous: $VERSION"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-  release:
+  add-tag:
     runs-on: ubuntu-latest
     needs: get-version
     if: ${{ needs.get-version.outputs.current != needs.get-version.outputs.previous }}
@@ -39,11 +39,6 @@ jobs:
         run: |
           git tag "v${{ needs.get-version.outputs.current }}"
           git push origin "v${{ needs.get-version.outputs.current }}"
-
-      - name: Create Release to GitHub
-        run: gh release create "v${{ needs.get-version.outputs.current }}" --generate-notes
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-and-publish:
     runs-on: ubuntu-latest
