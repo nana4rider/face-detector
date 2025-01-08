@@ -7,7 +7,7 @@ import numpy as np
 
 app = Flask(__name__)
 
-def detect_face_in_center(image_data):
+def detect_face_in_center(image_data, params):
     # Haarカスケードを使用した顔検出モデルをロード
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
 
@@ -18,12 +18,12 @@ def detect_face_in_center(image_data):
         print("入力画像を読み込めませんでした。")
         return {"error": "入力画像を読み込めませんでした。"}, 400
 
-    # 中央部分の固定座標（環境変数から取得）
+    # 中央部分の固定座標
     img_height, img_width = image.shape[:2]
-    x1 = int(os.getenv("X1", 0))
-    y1 = int(os.getenv("Y1", 0))
-    x2 = int(os.getenv("X2", img_width))
-    y2 = int(os.getenv("Y2", img_height))
+    x1 = int(params.get("x1", 0))
+    y1 = int(params.get("y1", 0))
+    x2 = int(params.get("x2", img_width))
+    y2 = int(params.get("y2", img_height))
 
     # 中央部分を切り抜き
     center_image = image[y1:y2, x1:x2]
@@ -31,10 +31,10 @@ def detect_face_in_center(image_data):
     # グレースケールに変換
     gray = cv2.cvtColor(center_image, cv2.COLOR_BGR2GRAY)
 
-    # 顔検出パラメータ（環境変数から取得）
-    scaleFactor = float(os.getenv("SCALE_FACTOR", 1.1))
-    minNeighbors = int(os.getenv("MIN_NEIGHBORS", 1))
-    minSize = int(os.getenv("MIN_SIZE", 30))
+    # 顔検出パラメータ
+    scaleFactor = float(params.get("scaleFactor", 1.1))
+    minNeighbors = int(params.get("minNeighbors", 2))
+    minSize = int(params.get("minSize", 80))
 
     # 顔を検出
     faces = face_cascade.detectMultiScale(gray, scaleFactor=scaleFactor, minNeighbors=minNeighbors, minSize=(minSize, minSize))
@@ -78,12 +78,27 @@ def detect():
         file = request.files['file']
         image_data = file.read()
 
-        return detect_face_in_center(image_data)
+        # リクエストパラメータを取得
+        params = {
+            "x1": request.form.get("x1"),
+            "y1": request.form.get("y1"),
+            "x2": request.form.get("x2"),
+            "y2": request.form.get("y2"),
+            "scaleFactor": request.form.get("scaleFactor"),
+            "minNeighbors": request.form.get("minNeighbors"),
+            "minSize": request.form.get("minSize")
+        }
+
+        # 顔検出処理
+        return detect_face_in_center(image_data, params)
 
     except Exception as e:
         print(f"エラー: {e}")
         return jsonify({"error": str(e)}), 500
 
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({"status": "ok"}), 200
+
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=5000)
