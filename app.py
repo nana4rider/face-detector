@@ -2,12 +2,16 @@ import cv2
 import io
 from flask import Flask, request, send_file, jsonify
 import numpy as np
+import mediapipe as mp
 
 app = Flask(__name__)
 
 def detect_face_with_resize(image_data, params):
-    # Haarカスケードを使用した顔検出モデルをロード
-    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+    # Mediapipeの顔検出を初期化
+    mp_face_detection = mp.solutions.face_detection
+    min_confidence = float(params.get("confidence") or 0.5)
+    min_size = int(params.get("minSize") or 0)  # 最小サイズ（ピクセル単位）
+    face_detection = mp_face_detection.FaceDetection(min_detection_confidence=min_confidence)
 
     # 入力画像をデコード
     nparr = np.frombuffer(image_data, np.uint8)
@@ -16,38 +20,26 @@ def detect_face_with_resize(image_data, params):
         print("入力画像を読み込めませんでした。")
         return {"error": "入力画像を読み込めませんでした。"}, 400
 
-    # 縮小スケール（デフォルト: 0.5）
-    scale = float(params.get("scale") or 0.5)
-
-    # 縮小処理（scale=1の場合はスキップ）
-    if scale < 1:
-        small_image = cv2.resize(image, (0, 0), fx=scale, fy=scale)
-        gray_small = cv2.cvtColor(small_image, cv2.COLOR_BGR2GRAY)
-    else:
-        gray_small = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-    # 顔検出パラメータ
-    scaleFactor = float(params.get("scaleFactor") or 1.1)
-    minNeighbors = int(params.get("minNeighbors") or 2)
-    minSize = int(params.get("minSize") or 80)
-
-    # 顔を検出
-    faces_small = face_cascade.detectMultiScale(
-        gray_small,
-        scaleFactor=scaleFactor,
-        minNeighbors=minNeighbors,
-        minSize=(int(minSize * scale), int(minSize * scale))
-    )
-
-    if len(faces_small) == 0:
+    # Mediapipeで顔検出
+    results = face_detection.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+    if not results.detections:
         print("顔が検出されませんでした。")
         return {"error": "顔が検出されませんでした。"}, 404
 
-    # 検出された顔の座標を元のサイズに変換（縮小時のみ）
-    if scale < 1:
-        faces_original = [(int(x / scale), int(y / scale), int(w / scale), int(h / scale)) for (x, y, w, h) in faces_small]
-    else:
-        faces_original = faces_small
+    # 検出された顔の座標を取得
+    faces_original = []
+    ih, iw, _ = image.shape
+    for detection in results.detections:
+        bboxC = detection.location_data.relative_bounding_box
+        x, y, w, h = int(bboxC.xmin * iw), int(bboxC.ymin * ih), int(bboxC.width * iw), int(bboxC.height * ih)
+        # 最小サイズ以上の顔のみ追加
+        if w >= min_size and h >= min_size:
+            faces_original.append((x, y, w, h))
+
+    # フィルタリング後に顔がない場合
+    if not faces_original:
+        print("指定されたサイズ以上の顔が検出されませんでした。")
+        return {"error": "指定されたサイズ以上の顔が検出されませんでした。"}, 404
 
     # 最大の顔を見つける
     largest_face = max(faces_original, key=lambda f: f[2] * f[3])  # 面積で最大の顔を選択
@@ -71,10 +63,8 @@ def detect():
 
         # リクエストパラメータを取得
         params = {
-            "scale": request.form.get("scale"),
-            "scaleFactor": request.form.get("scaleFactor"),
-            "minNeighbors": request.form.get("minNeighbors"),
-            "minSize": request.form.get("minSize")
+            "confidence": request.form.get("confidence"),  # 信頼度の閾値
+            "minSize": request.form.get("minSize")         # 最小サイズ
         }
 
         # 顔検出処理

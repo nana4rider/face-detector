@@ -1,13 +1,14 @@
-FROM python:3.13-slim
+FROM python:3.12-slim
 
 # 作業ディレクトリの設定
 WORKDIR /app
 
 # 必要なパッケージをインストール
 RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
-    libglib2.0-0 && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+    libopencv-dev \
+    ffmpeg \
+    libsm6 \
+    libxext6 && apt-get clean
 
 # 必要なPythonパッケージをインストール
 COPY requirements.txt ./
