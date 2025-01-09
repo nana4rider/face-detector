@@ -1,13 +1,11 @@
 import cv2
-import sys
 import io
-import os
 from flask import Flask, request, send_file, jsonify
 import numpy as np
 
 app = Flask(__name__)
 
-def detect_face_in_center(image_data, params):
+def detect_face_with_resize(image_data, params):
     # Haarカスケードを使用した顔検出モデルをロード
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
 
@@ -18,18 +16,15 @@ def detect_face_in_center(image_data, params):
         print("入力画像を読み込めませんでした。")
         return {"error": "入力画像を読み込めませんでした。"}, 400
 
-    # 切り抜き範囲
-    img_height, img_width = image.shape[:2]
-    x1 = int(params.get("x1", 0) or 0)
-    y1 = int(params.get("y1", 0) or 0)
-    x2 = int(params.get("x2", img_width) or img_width)
-    y2 = int(params.get("y2", img_height) or img_height)
+    # 縮小スケール（デフォルト: 0.5）
+    scale = float(params.get("scale") or 0.5)
 
-    # 指定範囲を切り抜き
-    center_image = image[y1:y2, x1:x2]
-
-    # グレースケールに変換
-    gray = cv2.cvtColor(center_image, cv2.COLOR_BGR2GRAY)
+    # 縮小処理（scale=1の場合はスキップ）
+    if scale < 1:
+        small_image = cv2.resize(image, (0, 0), fx=scale, fy=scale)
+        gray_small = cv2.cvtColor(small_image, cv2.COLOR_BGR2GRAY)
+    else:
+        gray_small = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # 顔検出パラメータ
     scaleFactor = float(params.get("scaleFactor") or 1.1)
@@ -37,32 +32,28 @@ def detect_face_in_center(image_data, params):
     minSize = int(params.get("minSize") or 80)
 
     # 顔を検出
-    faces = face_cascade.detectMultiScale(gray, scaleFactor=scaleFactor, minNeighbors=minNeighbors, minSize=(minSize, minSize))
+    faces_small = face_cascade.detectMultiScale(
+        gray_small,
+        scaleFactor=scaleFactor,
+        minNeighbors=minNeighbors,
+        minSize=(int(minSize * scale), int(minSize * scale))
+    )
 
-    if len(faces) == 0:
+    if len(faces_small) == 0:
         print("顔が検出されませんでした。")
         return {"error": "顔が検出されませんでした。"}, 404
 
+    # 検出された顔の座標を元のサイズに変換（縮小時のみ）
+    if scale < 1:
+        faces_original = [(int(x / scale), int(y / scale), int(w / scale), int(h / scale)) for (x, y, w, h) in faces_small]
+    else:
+        faces_original = faces_small
+
     # 最大の顔を見つける
-    largest_face = None
-    max_area = 0
-
-    for (x, y, w, h) in faces:
-        area = w * h
-        if area > max_area:
-            max_area = area
-            largest_face = (x, y, w, h)
-
-    if largest_face is None:
-        print("有効な顔が見つかりませんでした。")
-        return {"error": "有効な顔が見つかりませんでした。"}, 404
-
-    # 中央部分の顔の位置を元の画像の座標に変換
-    x, y, w, h = largest_face
-    x += x1
-    y += y1
+    largest_face = max(faces_original, key=lambda f: f[2] * f[3])  # 面積で最大の顔を選択
 
     # 顔部分を切り抜き
+    x, y, w, h = largest_face
     face_image = image[y:y+h, x:x+w]
 
     # バイナリデータを返却
@@ -80,17 +71,14 @@ def detect():
 
         # リクエストパラメータを取得
         params = {
-            "x1": request.form.get("x1"),
-            "y1": request.form.get("y1"),
-            "x2": request.form.get("x2"),
-            "y2": request.form.get("y2"),
+            "scale": request.form.get("scale"),
             "scaleFactor": request.form.get("scaleFactor"),
             "minNeighbors": request.form.get("minNeighbors"),
             "minSize": request.form.get("minSize")
         }
 
         # 顔検出処理
-        return detect_face_in_center(image_data, params)
+        return detect_face_with_resize(image_data, params)
 
     except Exception as e:
         print(f"エラー: {e}")
