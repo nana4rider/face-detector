@@ -123,7 +123,7 @@ def detect_form():
       </head>
       <body class="bg-light">
         <div class="container py-5">
-          <h1 class="mb-4">顔検出テストフォーム</h1>
+          <h1 class="mb-4">Face Detector</h1>
           <form action="/detect" method="post" enctype="multipart/form-data" onsubmit="handleSubmit(event)" class="card p-4 shadow-sm">
             <div class="mb-3">
               <label for="file" class="form-label">画像ファイル:</label>
