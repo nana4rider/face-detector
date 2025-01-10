@@ -17,14 +17,12 @@ def detect_face_with_resize(image_data, params):
     nparr = np.frombuffer(image_data, np.uint8)
     image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     if image is None:
-        print("入力画像を読み込めませんでした。")
-        return {"error": "入力画像を読み込めませんでした。"}, 400
+        return {"error": "入力画像を読み込めませんでした。", "status": 400}
 
     # Mediapipeで顔検出
     results = face_detection.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
     if not results.detections:
-        print("顔が検出されませんでした。")
-        return {"error": "顔が検出されませんでした。"}, 404
+        return {"error": "顔が検出されませんでした。", "status": 404}
 
     # 検出された顔の座標を取得
     faces_original = []
@@ -38,8 +36,7 @@ def detect_face_with_resize(image_data, params):
 
     # フィルタリング後に顔がない場合
     if not faces_original:
-        print("指定されたサイズ以上の顔が検出されませんでした。")
-        return {"error": "指定されたサイズ以上の顔が検出されませんでした。"}, 404
+        return {"error": "指定されたサイズ以上の顔が検出されませんでした。", "status": 404}
 
     # 最大の顔を見つける
     largest_face = max(faces_original, key=lambda f: f[2] * f[3])  # 面積で最大の顔を選択
@@ -75,8 +72,10 @@ def detect():
             response.headers['X-Image-Width'] = dimensions[0]
             response.headers['X-Image-Height'] = dimensions[1]
             return response
+        elif isinstance(result, dict):
+            return jsonify({"error": result["error"]}), result["status"]
         else:
-            return jsonify(result), result.get('status', 400)
+            return jsonify({"error": "不明なエラーが発生しました。"}), 500
 
     except Exception as e:
         print(f"エラー: {e}")
@@ -91,7 +90,7 @@ def detect_form():
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>顔検出テストフォーム</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+Knujsl5+5hb7V1iZqBO8e0L1fvy3gWlY8mOkDW+4D2kt4g" crossorigin="anonymous">
         <script>
           async function handleSubmit(event) {
             event.preventDefault();
