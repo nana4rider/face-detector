@@ -1,3 +1,3 @@
-# face-detector
+# Face Detector
 
 ChatGPT謹製
