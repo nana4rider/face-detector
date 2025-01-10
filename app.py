@@ -76,7 +76,7 @@ def detect():
             response.headers['X-Image-Height'] = dimensions[1]
             return response
         else:
-            return jsonify(result)
+            return jsonify(result), result.get('status', 400)
 
     except Exception as e:
         print(f"エラー: {e}")
