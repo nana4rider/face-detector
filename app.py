@@ -1,6 +1,6 @@
 import cv2
 import io
-from flask import Flask, request, send_file, jsonify
+from flask import Flask, request, send_file, jsonify, render_template_string
 import numpy as np
 import mediapipe as mp
 
@@ -50,7 +50,7 @@ def detect_face_with_resize(image_data, params):
 
     # バイナリデータを返却
     _, buffer = cv2.imencode('.jpg', face_image)
-    return send_file(io.BytesIO(buffer), mimetype='image/jpeg'), 200
+    return buffer, (w, h)
 
 @app.route('/detect', methods=['POST'])
 def detect():
@@ -68,11 +68,78 @@ def detect():
         }
 
         # 顔検出処理
-        return detect_face_with_resize(image_data, params)
+        result = detect_face_with_resize(image_data, params)
+        if isinstance(result, tuple):
+            buffer, dimensions = result
+            response = send_file(io.BytesIO(buffer), mimetype='image/jpeg')
+            response.headers['X-Image-Width'] = dimensions[0]
+            response.headers['X-Image-Height'] = dimensions[1]
+            return response
+        else:
+            return jsonify(result)
 
     except Exception as e:
         print(f"エラー: {e}")
         return jsonify({"error": str(e)}), 500
+
+@app.route('/detect', methods=['GET'])
+def detect_form():
+    form_html = '''
+    <!doctype html>
+    <html lang="ja">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>顔検出テストフォーム</title>
+        <script>
+          async function handleSubmit(event) {
+            event.preventDefault();
+
+            const form = event.target;
+            const formData = new FormData(form);
+
+            try {
+              const response = await fetch(form.action, {
+                method: form.method,
+                body: formData
+              });
+
+              const resultDiv = document.getElementById('result');
+              if (response.ok) {
+                const blob = await response.blob();
+                const imgUrl = URL.createObjectURL(blob);
+                const width = response.headers.get('X-Image-Width');
+                const height = response.headers.get('X-Image-Height');
+                resultDiv.innerHTML = `<img src="${imgUrl}" alt="Detected Face"><p>Width: ${width}px, Height: ${height}px</p>`;
+              } else {
+                const error = await response.json();
+                resultDiv.innerHTML = `<p style="color: red;">エラー (${response.status}): ${error.error}</p>`;
+              }
+            } catch (err) {
+              document.getElementById('result').innerHTML = `<p style="color: red;">エラー: ${err.message}</p>`;
+            }
+          }
+        </script>
+      </head>
+      <body>
+        <h1>顔検出テストフォーム</h1>
+        <form action="/detect" method="post" enctype="multipart/form-data" onsubmit="handleSubmit(event)">
+          <label for="file">画像ファイル:</label>
+          <input type="file" name="file" id="file" accept="image/*" required><br><br>
+
+          <label for="confidence">信頼度閾値 (0.0 - 1.0):</label>
+          <input type="number" name="confidence" id="confidence" step="0.1" min="0" max="1" value="0.5"><br><br>
+
+          <label for="minSize">最小サイズ (ピクセル):</label>
+          <input type="number" name="minSize" id="minSize" value="0"><br><br>
+
+          <button type="submit">検出</button>
+        </form>
+        <div id="result" style="margin-top: 20px;"></div>
+      </body>
+    </html>
+    '''
+    return render_template_string(form_html)
 
 @app.route('/health', methods=['GET'])
 def health():
