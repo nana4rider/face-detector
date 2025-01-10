@@ -91,6 +91,7 @@ def detect_form():
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>顔検出テストフォーム</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
         <script>
           async function handleSubmit(event) {
             event.preventDefault();
@@ -110,32 +111,37 @@ def detect_form():
                 const imgUrl = URL.createObjectURL(blob);
                 const width = response.headers.get('X-Image-Width');
                 const height = response.headers.get('X-Image-Height');
-                resultDiv.innerHTML = `<img src="${imgUrl}" alt="Detected Face"><p>Width: ${width}px, Height: ${height}px</p>`;
+                resultDiv.innerHTML = `<img class="img-fluid" src="${imgUrl}" alt="Detected Face"><p>Width: ${width}px, Height: ${height}px</p>`;
               } else {
                 const error = await response.json();
-                resultDiv.innerHTML = `<p style="color: red;">エラー (${response.status}): ${error.error}</p>`;
+                resultDiv.innerHTML = `<div class="alert alert-danger" role="alert">エラー (${response.status}): ${error.error}</div>`;
               }
             } catch (err) {
-              document.getElementById('result').innerHTML = `<p style="color: red;">エラー: ${err.message}</p>`;
+              document.getElementById('result').innerHTML = `<div class="alert alert-danger" role="alert">エラー: ${err.message}</div>`;
             }
           }
         </script>
       </head>
-      <body>
-        <h1>顔検出テストフォーム</h1>
-        <form action="/detect" method="post" enctype="multipart/form-data" onsubmit="handleSubmit(event)">
-          <label for="file">画像ファイル:</label>
-          <input type="file" name="file" id="file" accept="image/*" required><br><br>
-
-          <label for="confidence">信頼度閾値 (0.0 - 1.0):</label>
-          <input type="number" name="confidence" id="confidence" step="0.1" min="0" max="1" value="0.5"><br><br>
-
-          <label for="minSize">最小サイズ (ピクセル):</label>
-          <input type="number" name="minSize" id="minSize" value="0"><br><br>
-
-          <button type="submit">検出</button>
-        </form>
-        <div id="result" style="margin-top: 20px;"></div>
+      <body class="bg-light">
+        <div class="container py-5">
+          <h1 class="mb-4">顔検出テストフォーム</h1>
+          <form action="/detect" method="post" enctype="multipart/form-data" onsubmit="handleSubmit(event)" class="card p-4 shadow-sm">
+            <div class="mb-3">
+              <label for="file" class="form-label">画像ファイル:</label>
+              <input type="file" name="file" id="file" accept="image/*" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label for="confidence" class="form-label">信頼度閾値 (0.0 - 1.0):</label>
+              <input type="number" name="confidence" id="confidence" step="0.1" min="0" max="1" value="0.5" class="form-control">
+            </div>
+            <div class="mb-3">
+              <label for="minSize" class="form-label">最小サイズ (ピクセル):</label>
+              <input type="number" name="minSize" id="minSize" value="0" class="form-control">
+            </div>
+            <button type="submit" class="btn btn-primary">検出</button>
+          </form>
+          <div id="result" class="mt-4"></div>
+        </div>
       </body>
     </html>
     '''
