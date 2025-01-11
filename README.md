@@ -10,4 +10,4 @@ ChatGPT謹製の、画像から顔画像を切り取るAPIです。
 
 ## ドキュメント
 
-- [API Document](https://nana4rider.github.io/face-detector/)
+- [API Document](https://nana4rider.github.io/openapi-ui/#face-detector)
