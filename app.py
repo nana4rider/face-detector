@@ -121,11 +121,44 @@ def detect_form():
         <title>Face Detector</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
         <script>
+          // Cookieにフォームの値を保存
+          function saveFormToCookie(formData) {
+            const expires = new Date();
+            expires.setFullYear(expires.getFullYear() + 1); // 1年有効
+            formData.forEach((value, key) => {
+              document.cookie = `${key}=${encodeURIComponent(value)}; expires=${expires.toUTCString()}; path=/`;
+            });
+          }
+
+          // Cookieからフォームの値を取得
+          function loadFormFromCookie() {
+            const cookies = document.cookie.split(";").reduce((acc, cookie) => {
+              const [key, value] = cookie.trim().split("=");
+              acc[decodeURIComponent(key)] = decodeURIComponent(value);
+              return acc;
+            }, {});
+
+            // 各フォーム要素に値をセット
+            const formElements = document.querySelectorAll("form [name]");
+            formElements.forEach((el) => {
+              if (cookies[el.name]) {
+                el.value = cookies[el.name];
+              }
+            });
+          }
+
+          document.addEventListener("DOMContentLoaded", () => {
+            loadFormFromCookie(); // ページ読み込み時にCookieから値を反映
+          });
+
           async function handleSubmit(event) {
             event.preventDefault();
 
             const form = event.target;
             const formData = new FormData(form);
+
+            // フォームデータをCookieに保存
+            saveFormToCookie(formData);
 
             try {
               const startTime = performance.now(); // リクエスト開始時間
