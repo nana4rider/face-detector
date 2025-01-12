@@ -24,31 +24,31 @@ def detect_face_with_resize(image_data, params):
     if not results.detections:
         return {"error": "顔が検出されませんでした。", "status": 404}
 
-    # 検出された顔の座標を取得
-    faces_original = []
+    # 検出された顔の座標とスコアを取得
+    faces = []
     ih, iw, _ = image.shape
     for detection in results.detections:
         bboxC = detection.location_data.relative_bounding_box
+        score = detection.score[0]  # 信頼度
         x, y, w, h = int(bboxC.xmin * iw), int(bboxC.ymin * ih), int(bboxC.width * iw), int(bboxC.height * ih)
         # 最小サイズ以上の顔のみ追加
         if w >= min_size and h >= min_size:
-            faces_original.append((x, y, w, h))
+            faces.append({"bbox": (x, y, w, h), "score": score})
 
     # フィルタリング後に顔がない場合
-    if not faces_original:
+    if not faces:
         return {"error": "指定されたサイズ以上の顔が検出されませんでした。", "status": 404}
 
-    # 最大の顔を見つける
-    largest_face = max(faces_original, key=lambda f: f[2] * f[3])  # 面積で最大の顔を選択
+    # 信頼度が最も高い顔を選択
+    best_face = max(faces, key=lambda f: f["score"])
 
     # 顔部分を切り抜き
-    x, y, w, h = largest_face
+    x, y, w, h = best_face["bbox"]
     face_image = image[y:y+h, x:x+w]
 
     # バイナリデータを返却
     _, buffer = cv2.imencode('.jpg', face_image)
     return buffer, (w, h)
-
 @app.route('/detect', methods=['POST'])
 def detect():
     try:
