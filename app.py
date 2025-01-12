@@ -39,25 +39,16 @@ def detect_face(image_data, params):
     if not faces:
         return {"error": "指定されたサイズ以上の顔が検出されませんでした。", "status": 404}
 
-    # 信頼度順に顔をソート
-    faces.sort(key=lambda f: f["score"], reverse=True)
+    # 信頼度が最も高い顔を選択
+    best_face = max(faces, key=lambda f: f["score"])
 
-    # 各顔を切り抜き
-    face_images = []
-    for face in faces:
-        x, y, w, h = face["bbox"]
-        face_image = image[y:y+h, x:x+w]
-        face_images.append(face_image)
-
-    # 横並びに結合
-    try:
-        combined_image = cv2.hconcat(face_images)
-    except cv2.error as e:
-        return {"error": f"顔の結合に失敗しました: {str(e)}", "status": 500}
+    # 顔部分を切り抜き
+    x, y, w, h = best_face["bbox"]
+    face_image = image[y:y+h, x:x+w]
 
     # バイナリデータを返却
-    _, buffer = cv2.imencode('.jpg', combined_image)
-    return buffer, combined_image.shape[:2]  # 高さと幅を返却
+    _, buffer = cv2.imencode('.jpg', face_image)
+    return buffer, (w, h)
 
 @app.route('/detect', methods=['POST'])
 def detect():
