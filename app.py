@@ -141,6 +141,7 @@ def detect_form():
             // 各フォーム要素に値をセット
             const formElements = document.querySelectorAll("form [name]");
             formElements.forEach((el) => {
+              if (el.type === "file") return; // <input type="file"> はスキップ
               if (cookies[el.name]) {
                 el.value = cookies[el.name];
               }
