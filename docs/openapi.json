@@ -2,8 +2,8 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Face Detector",
-    "version": "2.0.0",
-    "description": "This API allows clients to upload an image, detect faces, and optionally filter by confidence or size."
+    "version": "2.3.0",
+    "description": "This API allows clients to upload an image, detect faces, and optionally filter by confidence, size, or crop specific areas."
   },
   "servers": [
     {
@@ -20,7 +20,7 @@
     "/detect": {
       "post": {
         "summary": "Detect faces in an image",
-        "description": "Uploads an image and detects faces based on confidence and size parameters.",
+        "description": "Uploads an image and detects faces based on confidence, size parameters, or crop area.",
         "requestBody": {
           "required": true,
           "content": {
@@ -40,6 +40,22 @@
                   "minSize": {
                     "type": "string",
                     "description": "Minimum size of detected faces in pixels (default: 0)"
+                  },
+                  "startX": {
+                    "type": "string",
+                    "description": "Start X-coordinate for cropping (optional)"
+                  },
+                  "startY": {
+                    "type": "string",
+                    "description": "Start Y-coordinate for cropping (optional)"
+                  },
+                  "endX": {
+                    "type": "string",
+                    "description": "End X-coordinate for cropping (optional)"
+                  },
+                  "endY": {
+                    "type": "string",
+                    "description": "End Y-coordinate for cropping (optional)"
                   }
                 },
                 "required": ["file"]
@@ -50,6 +66,20 @@
         "responses": {
           "200": {
             "description": "Face detected and returned",
+            "headers": {
+              "X-Image-Width": {
+                "description": "Width of the detected face image",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Image-Height": {
+                "description": "Height of the detected face image",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
             "content": {
               "image/jpeg": {
                 "schema": {
