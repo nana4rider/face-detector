@@ -128,10 +128,12 @@ def detect_form():
             const formData = new FormData(form);
 
             try {
+              const startTime = performance.now(); // リクエスト開始時間
               const response = await fetch(form.action, {
                 method: form.method,
                 body: formData
               });
+              const endTime = performance.now(); // レスポンス受信時間
 
               const resultDiv = document.getElementById('result');
               if (response.ok) {
@@ -139,13 +141,27 @@ def detect_form():
                 const imgUrl = URL.createObjectURL(blob);
                 const width = response.headers.get('X-Image-Width');
                 const height = response.headers.get('X-Image-Height');
-                resultDiv.innerHTML = `<img class="img-fluid" src="${imgUrl}" alt="Detected Face"><p>Width: ${width}px, Height: ${height}px</p>`;
+                const elapsedTime = Math.round(endTime - startTime); // 経過時間 (ミリ秒)
+                
+                resultDiv.innerHTML = `
+                  <img class="img-fluid" src="${imgUrl}" alt="Detected Face">
+                  <p>Width: ${width}px, Height: ${height}px</p>
+                  <p>Elapsed Time: ${elapsedTime} ms</p>
+                `;
               } else {
                 const error = await response.json();
-                resultDiv.innerHTML = `<div class="alert alert-danger" role="alert">エラー (${response.status}): ${error.error}</div>`;
+                resultDiv.innerHTML = `
+                  <div class="alert alert-danger" role="alert">
+                    エラー (${response.status}): ${error.error}
+                  </div>
+                `;
               }
             } catch (err) {
-              document.getElementById('result').innerHTML = `<div class="alert alert-danger" role="alert">エラー: ${err.message}</div>`;
+              document.getElementById('result').innerHTML = `
+                <div class="alert alert-danger" role="alert">
+                  エラー: ${err.message}
+                </div>
+              `;
             }
           }
         </script>
