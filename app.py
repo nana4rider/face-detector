@@ -77,24 +77,24 @@ def detect():
         # 画像のサイズを取得
         ih, iw, _ = image.shape
 
-        # リクエストパラメータを取得
+        # リクエストパラメータを取得し、空文字列をデフォルト値に置き換え
         params = {
             "confidence": request.form.get("confidence"),  # 信頼度の閾値
             "minSize": request.form.get("minSize"),        # 最小サイズ
-            "startX": request.form.get("startX"),
-            "startY": request.form.get("startY"),
-            "endX": request.form.get("endX"),
-            "endY": request.form.get("endY"),
+            "startX": int(request.form.get("startX") or 0),
+            "startY": int(request.form.get("startY") or 0),
+            "endX": int(request.form.get("endX") or iw),
+            "endY": int(request.form.get("endY") or ih),
         }
 
         # トリミング処理が必要か確認
-        if all(param is not None for param in [params["startX"], params["startY"], params["endX"], params["endY"]]):
+        if all(param != "" for param in [request.form.get("startX"), request.form.get("startY"), request.form.get("endX"), request.form.get("endY")]):
             try:
                 # パラメータを補正
-                start_x = max(0, min(int(params["startX"]), iw))
-                start_y = max(0, min(int(params["startY"]), ih))
-                end_x = max(start_x, min(int(params["endX"]), iw))
-                end_y = max(start_y, min(int(params["endY"]), ih))
+                start_x = max(0, min(params["startX"], iw))
+                start_y = max(0, min(params["startY"], ih))
+                end_x = max(start_x, min(params["endX"], iw))
+                end_y = max(start_y, min(params["endY"], ih))
 
                 # 画像をトリミング
                 image = image[start_y:end_y, start_x:end_x]
@@ -102,7 +102,7 @@ def detect():
                 return jsonify({"error": f"切り抜き範囲が無効です: {str(e)}"}), 400
 
         # 顔検出処理
-        result = detect_face_with_resize(cv2.imencode('.jpg', image)[1].tobytes(), params)
+        result = detect_face(cv2.imencode('.jpg', image)[1].tobytes(), params)
         if isinstance(result, tuple):
             buffer, dimensions = result
             response = send_file(io.BytesIO(buffer), mimetype='image/jpeg')
@@ -117,6 +117,7 @@ def detect():
     except Exception as e:
         print(f"エラー: {e}")
         return jsonify({"error": str(e)}), 500
+
 
 @app.route('/detect', methods=['GET'])
 def detect_form():
