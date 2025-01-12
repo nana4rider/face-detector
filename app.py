@@ -68,14 +68,41 @@ def detect():
         file = request.files['file']
         image_data = file.read()
 
+        # 入力画像をデコード
+        nparr = np.frombuffer(image_data, np.uint8)
+        image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        if image is None:
+            return jsonify({"error": "入力画像を読み込めませんでした。"}), 400
+
+        # 画像のサイズを取得
+        ih, iw, _ = image.shape
+
         # リクエストパラメータを取得
         params = {
             "confidence": request.form.get("confidence"),  # 信頼度の閾値
-            "minSize": request.form.get("minSize")         # 最小サイズ
+            "minSize": request.form.get("minSize"),        # 最小サイズ
+            "startX": request.form.get("startX"),
+            "startY": request.form.get("startY"),
+            "endX": request.form.get("endX"),
+            "endY": request.form.get("endY"),
         }
 
+        # トリミング処理が必要か確認
+        if all(param is not None for param in [params["startX"], params["startY"], params["endX"], params["endY"]]):
+            try:
+                # パラメータを補正
+                start_x = max(0, min(int(params["startX"]), iw))
+                start_y = max(0, min(int(params["startY"]), ih))
+                end_x = max(start_x, min(int(params["endX"]), iw))
+                end_y = max(start_y, min(int(params["endY"]), ih))
+
+                # 画像をトリミング
+                image = image[start_y:end_y, start_x:end_x]
+            except Exception as e:
+                return jsonify({"error": f"切り抜き範囲が無効です: {str(e)}"}), 400
+
         # 顔検出処理
-        result = detect_face(image_data, params)
+        result = detect_face_with_resize(cv2.imencode('.jpg', image)[1].tobytes(), params)
         if isinstance(result, tuple):
             buffer, dimensions = result
             response = send_file(io.BytesIO(buffer), mimetype='image/jpeg')
@@ -146,6 +173,26 @@ def detect_form():
             <div class="mb-3">
               <label for="minSize" class="form-label">最小サイズ (ピクセル):</label>
               <input type="number" name="minSize" id="minSize" value="0" class="form-control">
+            </div>
+            <div class="row mb-3">
+              <div class="col">
+                <label for="startX" class="form-label">切り抜き開始 X (省略可能):</label>
+                <input type="number" name="startX" id="startX" class="form-control">
+              </div>
+              <div class="col">
+                <label for="startY" class="form-label">切り抜き開始 Y (省略可能):</label>
+                <input type="number" name="startY" id="startY" class="form-control">
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col">
+                <label for="endX" class="form-label">切り抜き終了 X (省略可能):</label>
+                <input type="number" name="endX" id="endX" class="form-control">
+              </div>
+              <div class="col">
+                <label for="endY" class="form-label">切り抜き終了 Y (省略可能):</label>
+                <input type="number" name="endY" id="endY" class="form-control">
+              </div>
             </div>
             <button type="submit" class="btn btn-primary">検出</button>
           </form>
