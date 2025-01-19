@@ -3,15 +3,20 @@ import io
 from flask import Flask, request, send_file, jsonify, render_template_string
 import numpy as np
 import mediapipe as mp
+import os
 
 app = Flask(__name__)
 
-def detect_face(image_data, params):
+def initialize_face_detection():
     # Mediapipeの顔検出を初期化
-    mp_face_detection = mp.solutions.face_detection
-    min_confidence = float(params.get("confidence") or 0.5)
+    min_confidence = float(os.getenv("FACE_DETECTION_CONFIDENCE", "0.5"))
+    print(f"Initializing FaceDetection with confidence: {min_confidence}")
+    return mp.solutions.face_detection.FaceDetection(min_detection_confidence=min_confidence)
+
+face_detection = initialize_face_detection()
+
+def detect_face(image_data, params):
     min_size = int(params.get("minSize") or 0)  # 最小サイズ（ピクセル単位）
-    face_detection = mp_face_detection.FaceDetection(min_detection_confidence=min_confidence)
 
     # 入力画像をデコード
     nparr = np.frombuffer(image_data, np.uint8)
