@@ -17,8 +17,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # アプリケーションコードをコピー
 COPY . .
 
-# 環境変数でデフォルトのワーカー数を指定
-ENV WORKERS=1
-
 # コンテナ起動時のコマンド
-CMD ["sh", "-c", "gunicorn -w ${WORKERS} -b 0.0.0.0:5000 --timeout 3 app:app"]
+CMD ["sh", "-c", "gunicorn -w ${WORKERS:-1} -b 0.0.0.0:5000 --timeout 3 app:app"]
