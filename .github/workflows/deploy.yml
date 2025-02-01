@@ -1,4 +1,4 @@
-name: Deploy
+name: Release
 
 on:
   push:
@@ -7,47 +7,53 @@ on:
   workflow_dispatch:
 
 jobs:
-  get-version:
+  prepare-release:
     runs-on: ubuntu-latest
     outputs:
-      current: ${{ steps.current.outputs.version }}
-      previous: ${{ steps.previous.outputs.version }}
+      current_version: ${{ steps.version.outputs.current_version }}
+      tag_exists: ${{ steps.tag_check.outputs.tag_exists }}
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
+          fetch-tags: true
 
-      - id: current
+      - id: version
         run: |
-          VERSION=$(cat version.txt)
-          echo "current: $VERSION"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          CURRENT_VERSION=$(cat version.txt)
+          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
 
-      - id: previous
+      - id: tag_check
         run: |
-          VERSION=$(git show HEAD~1:version.txt)
-          echo "previous: $VERSION"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          if git rev-parse "v${{ steps.version.outputs.current_version }}" >/dev/null 2>&1; then
+            echo "tag_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "tag_exists=false" >> $GITHUB_OUTPUT
+          fi
 
-  add-tag:
+  release:
     runs-on: ubuntu-latest
-    needs: get-version
-    if: ${{ github.event_name == 'workflow_dispatch' || needs.get-version.outputs.current != needs.get-version.outputs.previous }}
+    needs: prepare-release
+    if: ${{ needs.prepare-release.outputs.tag_exists == 'false' }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Add Tag
         run: |
-          git tag "v${{ needs.get-version.outputs.current }}"
-          git push origin "v${{ needs.get-version.outputs.current }}"
+          git tag "v${{ needs.prepare-release.outputs.current_version }}"
+          git push origin "v${{ needs.prepare-release.outputs.current_version }}"
+
+      - name: Create Release to GitHub
+        run: gh release create "v${{ needs.prepare-release.outputs.current_version }}" --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-and-publish:
     runs-on: ubuntu-latest
-    needs: get-version
-    if: ${{ github.event_name == 'workflow_dispatch' || needs.get-version.outputs.current != needs.get-version.outputs.previous }}
+    needs: prepare-release
+    if: ${{ needs.prepare-release.outputs.tag_exists == 'false' }}
     steps:
-      - name: checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -62,7 +68,7 @@ jobs:
           images: ${{ github.repository }}
           tags: |
             type=raw,value=latest
-            type=raw,value=v${{ needs.get-version.outputs.current }}
+            type=raw,value=v${{ needs.prepare-release.outputs.current_version }}
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -74,7 +80,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          platforms: linux/arm64
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
