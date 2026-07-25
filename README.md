@@ -34,7 +34,8 @@ GitHub Actionsのリリースタグにも同じ値が使われます。
 `POST /detect` の `scoreThreshold` は、MediaPipeが返した検出結果のscoreを
 絞り込むためのパラメータです。MediaPipeモデル自体の検出閾値は
 `FACE_DETECTION_CONFIDENCE` 環境変数で起動時に設定します。
-顔検出にはMediaPipe Tasks APIと `models/blaze_face_short_range.tflite` を使用します。
+顔検出にはMediaPipe Tasks APIと
+`face_detector/models/blaze_face_short_range.tflite` を使用します。
 別の互換モデルを使う場合は、`FACE_DETECTION_MODEL` にモデルファイルのパスを
 指定してください。
 
