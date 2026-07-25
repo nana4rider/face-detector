@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "face-detector"
+version = "3.0.0"
+description = "画像から最も信頼度の高い顔を検出して切り抜くAPI"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "ISC"
+dependencies = [
+    "fastapi",
+    "mediapipe==0.10.35",
+    "numpy",
+    "opencv-contrib-python==5.0.0.93",
+    "python-multipart",
+    "uvicorn",
+]
+
+[project.optional-dependencies]
+dev = [
+    "basedpyright==1.39.4",
+    "pre-commit>=4,<5",
+    "pytest",
+    "ruff==0.16.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["face_detector*"]
+
+[tool.setuptools.package-data]
+face_detector = [
+    "models/*.md",
+    "models/*.tflite",
+    "static/*.html",
+    "static/*.js",
+    "static/*.png",
+]
+
+[tool.ruff]
+target-version = "py312"
+
+[tool.ruff.lint]
+extend-select = ["I"]
+
+[tool.pytest.ini_options]
+addopts = ["--import-mode=importlib"]
+testpaths = ["tests"]
+
+[tool.pyright]
+include = ["face_detector", "scripts", "tests"]
+pythonVersion = "3.12"
+typeCheckingMode = "basic"
+venv = ".venv"
+venvPath = "."

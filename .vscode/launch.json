@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "FastAPI: 開発サーバー",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": [
+        "face_detector.main:app",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "5000",
+        "--reload"
+      ],
+      "jinja": false,
+      "justMyCode": true
+    }
+  ]
+}
