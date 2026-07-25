@@ -16,4 +16,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # コンテナ起動時のコマンド
-CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port 5000 --workers ${WORKERS:-1} --timeout-keep-alive 3"]
+CMD ["sh", "-c", "uvicorn face_detector.main:app --host 0.0.0.0 --port 5000 --workers ${WORKERS:-1} --timeout-keep-alive 3"]

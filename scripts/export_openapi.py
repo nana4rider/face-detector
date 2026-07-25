@@ -8,7 +8,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 OUTPUT_PATH = PROJECT_ROOT / "docs" / "openapi.json"
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from app import app  # noqa: E402
+from face_detector.main import app
 
 
 def main() -> None:

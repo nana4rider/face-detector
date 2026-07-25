@@ -7,7 +7,7 @@
       "request": "launch",
       "module": "uvicorn",
       "args": [
-        "app:app",
+        "face_detector.main:app",
         "--host",
         "127.0.0.1",
         "--port",

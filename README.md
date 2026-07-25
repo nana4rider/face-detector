@@ -5,7 +5,7 @@
 
 ## 概要
 
-ChatGPT謹製の、画像から顔画像を切り取るAPIです。
+画像から顔画像を切り取るAPIです。
 
 コーディングはAPIドキュメントも全てChatGPTに任せており、自分では1行も書かないことを目標にしています🤖
 
@@ -53,7 +53,7 @@ WSLターミナルで次を実行します。
 
 ```sh
 source .venv/bin/activate
-uvicorn app:app --host 127.0.0.1 --port 5000 --reload
+uvicorn face_detector.main:app --host 127.0.0.1 --port 5000 --reload
 ```
 
 起動後は <http://localhost:5000/detect> で動作を確認できます。
