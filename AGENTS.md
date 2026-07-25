@@ -15,7 +15,7 @@ JPEGとして返す、省メモリを重視したFastAPIサービスです。ユ
 - `face_detector/api.py`: HTTPルート、フォーム解析、画像読込、切り抜き、レスポンス
 - `face_detector/detection.py`: MediaPipeの所有と顔選択・JPEG変換
 - `face_detector/config.py`: 環境変数とリポジトリ内アセットのパス
-- `face_detector/static/index.html`: `GET /detect` で返すブラウザUI
+- `face_detector/static/`: `GET /detect` のHTML、JavaScript、favicon
 - `face_detector/models/`: MediaPipeモデルと出典・ライセンス情報
 - `scripts/export_openapi.py`: 静的OpenAPIドキュメントの生成
 - `tests/`: 実際のMediaPipeモデルを初期化しない高速テスト

@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 from fastapi import UploadFile
 from fastapi.responses import JSONResponse, Response
+from starlette.routing import Mount
 
 from face_detector import api
 from face_detector.detection import DetectionFailure, DetectionSuccess, FaceDetector
@@ -58,10 +59,14 @@ def test_runtime_openapi_is_disabled() -> None:
 
 
 def test_openapi_contains_public_endpoints() -> None:
-    schema = create_app().openapi()
+    app = create_app()
+    schema = app.openapi()
 
     assert set(schema["paths"]) == {"/detect", "/health"}
     assert "post" in schema["paths"]["/detect"]
+    assert any(
+        isinstance(route, Mount) and route.path == "/static" for route in app.routes
+    )
 
 
 def test_detect_rejects_invalid_image() -> None:

@@ -5,6 +5,7 @@ from importlib.metadata import version
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from face_detector.api import error_response, router
 from face_detector.config import settings
@@ -48,6 +49,11 @@ def create_app() -> FastAPI:
         return error_response(message, 400)
 
     application.include_router(router)
+    application.mount(
+        "/static",
+        StaticFiles(directory=settings.static_dir),
+        name="static",
+    )
     return application
 
 

@@ -30,7 +30,13 @@ dev = [
 include = ["face_detector*"]
 
 [tool.setuptools.package-data]
-face_detector = ["models/*.md", "models/*.tflite", "static/*.html", "static/*.png"]
+face_detector = [
+    "models/*.md",
+    "models/*.tflite",
+    "static/*.html",
+    "static/*.js",
+    "static/*.png",
+]
 
 [tool.ruff]
 target-version = "py312"
