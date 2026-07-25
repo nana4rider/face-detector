@@ -28,7 +28,7 @@ def detector_stub() -> FaceDetector:
 
 
 def response_json(response: JSONResponse) -> str:
-    return response.body.decode()
+    return bytes(response.body).decode()
 
 
 def test_health() -> None:

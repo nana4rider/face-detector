@@ -7,6 +7,12 @@ repos:
       - id: ruff-format
   - repo: local
     hooks:
+      - id: basedpyright
+        name: basedpyright
+        entry: .venv/bin/basedpyright
+        language: system
+        pass_filenames: false
+        stages: [pre-commit, pre-push]
       - id: pytest
         name: pytest
         entry: .venv/bin/python -m pytest

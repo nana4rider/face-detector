@@ -88,6 +88,7 @@ def test_selects_highest_score_face() -> None:
     decoded = cv2.imdecode(
         np.frombuffer(result.image_bytes, np.uint8), cv2.IMREAD_COLOR
     )
+    assert decoded is not None
     assert decoded.shape[:2] == (25, 40)
 
 
