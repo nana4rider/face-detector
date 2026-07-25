@@ -8,8 +8,6 @@
 
 画像から顔画像を切り取るAPIです。
 
-コーディングはAPIドキュメントも全てChatGPTに任せており、自分では1行も書かないことを目標にしています🤖
-
 ## ドキュメント
 
 - [API Document](https://nana4rider.github.io/openapi-ui/?face-detector)
