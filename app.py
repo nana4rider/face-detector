@@ -1,6 +1,7 @@
 import os
 import threading
 from contextlib import asynccontextmanager
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Annotated
 
@@ -10,25 +11,54 @@ import numpy as np
 from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, Response
-
+from mediapipe.tasks.python.components.containers.detections import (
+    DetectionResult as MediaPipeDetectionResult,
+)
 
 STATIC_DIR = Path(__file__).parent / "static"
+DEFAULT_MODEL_PATH = Path(__file__).parent / "models" / "blaze_face_short_range.tflite"
+MODEL_PATH = Path(os.getenv("FACE_DETECTION_MODEL", str(DEFAULT_MODEL_PATH)))
 MODEL_MIN_CONFIDENCE = float(os.getenv("FACE_DETECTION_CONFIDENCE", "0.5"))
 
 
-class FaceDetector:
-    """Owns the MediaPipe graph and serializes access to its mutable state."""
+@dataclass(frozen=True)
+class DetectionSuccess:
+    image_bytes: bytes
+    dimensions: tuple[int, int]
 
-    def __init__(self, min_confidence: float) -> None:
-        self._detector = mp.solutions.face_detection.FaceDetection(
-            min_detection_confidence=min_confidence
+
+@dataclass(frozen=True)
+class DetectionFailure:
+    message: str
+    status_code: int
+
+
+type FaceDetectionOutcome = DetectionSuccess | DetectionFailure
+
+
+class FaceDetector:
+    """Owns the MediaPipe Task and serializes access to its mutable state."""
+
+    def __init__(self, model_path: Path, min_confidence: float) -> None:
+        options = mp.tasks.vision.FaceDetectorOptions(
+            base_options=mp.tasks.BaseOptions(
+                model_asset_path=str(model_path),
+                delegate=mp.tasks.BaseOptions.Delegate.CPU,
+            ),
+            running_mode=mp.tasks.vision.RunningMode.IMAGE,
+            min_detection_confidence=min_confidence,
         )
+        self._detector = mp.tasks.vision.FaceDetector.create_from_options(options)
         self._lock = threading.Lock()
 
-    def process(self, image: np.ndarray):
+    def process(self, image: np.ndarray) -> MediaPipeDetectionResult:
         rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        media_pipe_image = mp.Image(
+            image_format=mp.ImageFormat.SRGB,
+            data=np.ascontiguousarray(rgb_image),
+        )
         with self._lock:
-            return self._detector.process(rgb_image)
+            return self._detector.detect(media_pipe_image)
 
     def close(self) -> None:
         self._detector.close()
@@ -36,7 +66,7 @@ class FaceDetector:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.face_detector = FaceDetector(MODEL_MIN_CONFIDENCE)
+    app.state.face_detector = FaceDetector(MODEL_PATH, MODEL_MIN_CONFIDENCE)
     yield
     app.state.face_detector.close()
 
@@ -93,33 +123,35 @@ def detect_face(
     detector: FaceDetector,
     score_threshold: float,
     min_size: int,
-) -> tuple[bytes, tuple[int, int]] | tuple[str, int]:
+) -> FaceDetectionOutcome:
     results = detector.process(image)
     if not results.detections:
-        return "顔が検出されませんでした。", 404
+        return DetectionFailure("顔が検出されませんでした。", 404)
 
     image_height, image_width = image.shape[:2]
     faces: list[tuple[float, int, int, int, int]] = []
     for detection in results.detections:
-        score = float(detection.score[0])
-        bbox = detection.location_data.relative_bounding_box
-        x1 = max(0, int(bbox.xmin * image_width))
-        y1 = max(0, int(bbox.ymin * image_height))
-        x2 = min(image_width, int((bbox.xmin + bbox.width) * image_width))
-        y2 = min(image_height, int((bbox.ymin + bbox.height) * image_height))
+        if not detection.categories:
+            continue
+        score = float(detection.categories[0].score)
+        bbox = detection.bounding_box
+        x1 = max(0, bbox.origin_x)
+        y1 = max(0, bbox.origin_y)
+        x2 = min(image_width, bbox.origin_x + bbox.width)
+        y2 = min(image_height, bbox.origin_y + bbox.height)
         width, height = x2 - x1, y2 - y1
         if score >= score_threshold and width >= min_size and height >= min_size:
             faces.append((score, x1, y1, width, height))
 
     if not faces:
-        return "指定された条件を満たす顔が検出されませんでした。", 404
+        return DetectionFailure("指定された条件を満たす顔が検出されませんでした。", 404)
 
     _, x, y, width, height = max(faces, key=lambda face: face[0])
     face_image = image[y : y + height, x : x + width]
     encoded, buffer = cv2.imencode(".jpg", face_image)
     if not encoded:
-        return "検出画像をJPEGに変換できませんでした。", 500
-    return buffer.tobytes(), (width, height)
+        return DetectionFailure("検出画像をJPEGに変換できませんでした。", 500)
+    return DetectionSuccess(buffer.tobytes(), (width, height))
 
 
 @app.post(
@@ -155,9 +187,7 @@ def detect(
     endY: Annotated[str | None, Form()] = None,
 ):
     try:
-        score_threshold = optional_float(
-            score_threshold_parameter, "scoreThreshold"
-        )
+        score_threshold = optional_float(score_threshold_parameter, "scoreThreshold")
         score_threshold = (
             MODEL_MIN_CONFIDENCE if score_threshold is None else score_threshold
         )
@@ -191,24 +221,21 @@ def detect(
                 return error_response("切り抜き範囲が空です。", 400)
             image = image[start_y:end_y, start_x:end_x]
 
-        result = detect_face(
-            image, app.state.face_detector, score_threshold, min_size
-        )
-        if isinstance(result[0], str):
-            return error_response(result[0], result[1])
+        result = detect_face(image, app.state.face_detector, score_threshold, min_size)
+        if isinstance(result, DetectionFailure):
+            return error_response(result.message, result.status_code)
 
-        image_bytes, dimensions = result
         return Response(
-            content=image_bytes,
+            content=result.image_bytes,
             media_type="image/jpeg",
             headers={
-                "X-Image-Width": str(dimensions[0]),
-                "X-Image-Height": str(dimensions[1]),
+                "X-Image-Width": str(result.dimensions[0]),
+                "X-Image-Height": str(result.dimensions[1]),
             },
         )
     except ValueError as exc:
         return error_response(str(exc), 400)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         return error_response(str(exc), 500)
 
 

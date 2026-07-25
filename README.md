@@ -29,6 +29,9 @@ VS Codeの「タスクの実行」から `OpenAPI: JSONを生成` を選ぶこ�
 `POST /detect` の `scoreThreshold` は、MediaPipeが返した検出結果のscoreを
 絞り込むためのパラメータです。MediaPipeモデル自体の検出閾値は
 `FACE_DETECTION_CONFIDENCE` 環境変数で起動時に設定します。
+顔検出にはMediaPipe Tasks APIと `models/blaze_face_short_range.tflite` を使用します。
+別の互換モデルを使う場合は、`FACE_DETECTION_MODEL` にモデルファイルのパスを
+指定してください。
 
 ## VS Code + WSLでのローカル実行
 
@@ -37,7 +40,7 @@ Pythonパッケージはプロジェクト直下の `.venv` にだけインス�
 
 ```sh
 sudo apt update
-sudo apt install -y python3-venv libgl1 libglib2.0-0
+sudo apt install -y python3-venv libegl1 libgl1 libgles2 libglib2.0-0
 
 python3 -m venv .venv
 .venv/bin/python -m pip install --upgrade pip
