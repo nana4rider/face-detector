@@ -34,7 +34,13 @@
       "label": "Git: pre-commitフックを有効化",
       "type": "process",
       "command": "${workspaceFolder}/.venv/bin/pre-commit",
-      "args": ["install"],
+      "args": [
+        "install",
+        "--hook-type",
+        "pre-commit",
+        "--hook-type",
+        "pre-push"
+      ],
       "dependsOn": "Python: 依存パッケージをインストール",
       "problemMatcher": []
     }

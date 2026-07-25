@@ -21,6 +21,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pre-commit>=4,<5",
+    "pytest",
     "ruff==0.16.0",
 ]
 
@@ -32,3 +33,7 @@ target-version = "py312"
 
 [tool.ruff.lint]
 extend-select = ["I"]
+
+[tool.pytest.ini_options]
+addopts = ["--import-mode=importlib"]
+testpaths = ["tests"]

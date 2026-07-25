@@ -50,7 +50,7 @@ sudo apt install -y python3-venv libegl1 libgl1 libgles2 libglib2.0-0
 python3 -m venv .venv
 .venv/bin/python -m pip install --upgrade pip
 .venv/bin/python -m pip install --editable ".[dev]"
-.venv/bin/pre-commit install
+.venv/bin/pre-commit install --hook-type pre-commit --hook-type pre-push
 ```
 
 VS Codeを一度再読み込みすると `.venv/bin/python` が自動選択されます。
@@ -74,7 +74,8 @@ VS Codeの「タスクの実行」から以下を順に実行することもで�
 
 コミット時にはpre-commitがRuffのimport整理とフォーマットを自動実行します。
 修正が発生した場合はコミットが一度停止するため、差分を確認して再度コミットして
-ください。リポジトリ全体を手動確認する場合は次を実行できます。
+ください。`git push` の前にはpytestが自動実行されます。
+リポジトリ全体を手動確認する場合は次を実行できます。
 
 ```sh
 .venv/bin/pre-commit run --all-files

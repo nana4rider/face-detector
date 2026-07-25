@@ -7,11 +7,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  lint:
+  test:
     uses: ./.github/workflows/test.yml
 
   prepare-release:
-    needs: lint
+    needs: test
     runs-on: ubuntu-latest
     outputs:
       current_version: ${{ steps.version.outputs.current_version }}
