@@ -7,7 +7,7 @@ JPEGとして返す、省メモリを重視したFastAPIサービスです。ユ
 破壊的変更を依頼されない限り、既存のHTTP APIとの互換性を維持してください。
 
 アプリケーションはPython 3.12以上とMediaPipe Tasks APIを使用します。
-本番DockerとCIでは現在Python 3.14を使用しています。
+本番DockerとCIでは現在Python 3.12を使用しています。
 
 ## ソース構成
 
