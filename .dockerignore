@@ -1,5 +1,6 @@
 .git
 .github
+.pre-commit-config.yaml
 .venv
 .vscode
 __pycache__
@@ -10,5 +11,3 @@ __pycache__
 .mypy_cache
 .ruff_cache
 docs
-LICENSE
-README.md

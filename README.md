@@ -26,6 +26,10 @@ API定義を変更した場合は、次のコマンドで仕様ファイルを�
 
 VS Codeの「タスクの実行」から `OpenAPI: JSONを生成` を選ぶこともできます。
 
+アプリケーションのバージョンとPython依存関係は `pyproject.toml` で管理します。
+リリース時は `[project]` の `version` を更新してください。FastAPIのOpenAPIバージョンと
+GitHub Actionsのリリースタグにも同じ値が使われます。
+
 `POST /detect` の `scoreThreshold` は、MediaPipeが返した検出結果のscoreを
 絞り込むためのパラメータです。MediaPipeモデル自体の検出閾値は
 `FACE_DETECTION_CONFIDENCE` 環境変数で起動時に設定します。
@@ -44,7 +48,8 @@ sudo apt install -y python3-venv libegl1 libgl1 libgles2 libglib2.0-0
 
 python3 -m venv .venv
 .venv/bin/python -m pip install --upgrade pip
-.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m pip install --editable ".[dev]"
+.venv/bin/pre-commit install
 ```
 
 VS Codeを一度再読み込みすると `.venv/bin/python` が自動選択されます。
@@ -64,6 +69,15 @@ VS Codeの「タスクの実行」から以下を順に実行することもで�
 
 1. `Python: 仮想環境を作成`
 2. `Python: 依存パッケージをインストール`
+3. `Git: pre-commitフックを有効化`
+
+コミット時にはpre-commitがRuffのimport整理とフォーマットを自動実行します。
+修正が発生した場合はコミットが一度停止するため、差分を確認して再度コミットして
+ください。リポジトリ全体を手動確認する場合は次を実行できます。
+
+```sh
+.venv/bin/pre-commit run --all-files
+```
 
 `WORKERS` を増やすと各プロセスがMediaPipeモデルを保持するため、メモリ使用量も
 ほぼ比例して増えます。省メモリ運用ではデフォルトの1ワーカーを推奨します。

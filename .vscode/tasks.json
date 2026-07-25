@@ -9,14 +9,14 @@
     },
     {
       "label": "Python: 依存パッケージをインストール",
-      "type": "shell",
+      "type": "process",
       "command": "${workspaceFolder}/.venv/bin/python",
       "args": [
         "-m",
         "pip",
         "install",
-        "-r",
-        "${workspaceFolder}/requirements.txt"
+        "--editable",
+        "${workspaceFolder}[dev]"
       ],
       "dependsOn": "Python: 仮想環境を作成",
       "problemMatcher": []
@@ -28,6 +28,14 @@
       "args": [
         "${workspaceFolder}/scripts/export_openapi.py"
       ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Git: pre-commitフックを有効化",
+      "type": "process",
+      "command": "${workspaceFolder}/.venv/bin/pre-commit",
+      "args": ["install"],
+      "dependsOn": "Python: 依存パッケージをインストール",
       "problemMatcher": []
     }
   ]

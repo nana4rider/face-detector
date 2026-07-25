@@ -1,6 +1,0 @@
-fastapi
-mediapipe==0.10.35
-numpy
-opencv-contrib-python==5.0.0.93
-python-multipart
-uvicorn

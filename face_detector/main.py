@@ -1,5 +1,6 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from importlib.metadata import version
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
@@ -8,6 +9,8 @@ from fastapi.responses import JSONResponse
 from face_detector.api import error_response, router
 from face_detector.config import settings
 from face_detector.detection import FaceDetector
+
+APP_VERSION = version("face-detector")
 
 
 @asynccontextmanager
@@ -24,7 +27,7 @@ def create_app() -> FastAPI:
     application = FastAPI(
         title="Face Detector",
         description="画像から最も信頼度の高い顔を検出して切り抜くAPIです。",
-        version="3.0.0",
+        version=APP_VERSION,
         lifespan=lifespan,
         openapi_url=None,
         docs_url=None,
@@ -32,9 +35,7 @@ def create_app() -> FastAPI:
     )
 
     @application.exception_handler(RequestValidationError)
-    def validation_error_handler(
-        _, exc: RequestValidationError
-    ) -> JSONResponse:
+    def validation_error_handler(_, exc: RequestValidationError) -> JSONResponse:
         missing_file = any(
             error["type"] == "missing" and error["loc"][-1] == "file"
             for error in exc.errors()

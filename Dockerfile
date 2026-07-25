@@ -8,9 +8,10 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends libegl1 libgl1 libgles2 libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# 必要なPythonパッケージをインストール
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+# プロジェクトと必要なPythonパッケージをインストール
+COPY pyproject.toml README.md LICENSE ./
+COPY face_detector ./face_detector
+RUN pip install --no-cache-dir .
 
 # アプリケーションコードをコピー
 COPY . .
