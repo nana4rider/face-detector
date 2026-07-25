@@ -1,8 +1,8 @@
 # Face Detector
 
 [![License: ISC](https://img.shields.io/github/license/nana4rider/face-detector)](LICENSE)
-![GitHub Actions Test](https://github.com/nana4rider/ace-detector/actions/workflows/test.yml/badge.svg)
-![GitHub Actions Release](https://github.com/nana4rider/ace-detector/actions/workflows/release.yml/badge.svg)
+![GitHub Actions Test](https://github.com/nana4rider/face-detector/actions/workflows/test.yml/badge.svg)
+![GitHub Actions Release](https://github.com/nana4rider/face-detector/actions/workflows/release.yml/badge.svg)
 
 ## 概要
 
