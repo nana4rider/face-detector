@@ -57,8 +57,10 @@ pytestを実行します。CIも `.github/workflows/test.yml` で同じ検査を
 
 公開ルートは次のとおりです。
 
+- `GET /`（`/detect` へリダイレクト。意図的にOpenAPI対象外）
 - `POST /detect`
 - `GET /detect`（HTML UI。意図的にOpenAPI対象外）
+- `GET /icon.png`（favicon。意図的にOpenAPI対象外）
 - `GET /health`
 
 実行中の `/openapi.json`、`/docs`、`/redoc` は無効のままにしてください。

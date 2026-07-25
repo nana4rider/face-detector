@@ -35,6 +35,20 @@ def test_health() -> None:
     assert api.health() == {"status": "ok"}
 
 
+def test_root_redirects_to_ui() -> None:
+    response = api.root()
+
+    assert response.status_code == 307
+    assert response.headers["location"] == "/detect"
+
+
+def test_icon_response_uses_static_icon() -> None:
+    response = api.icon()
+
+    assert response.media_type == "image/png"
+    assert response.path == api.settings.static_dir / "icon.png"
+
+
 def test_runtime_openapi_is_disabled() -> None:
     app = create_app()
 

@@ -3,7 +3,7 @@ from typing import Annotated, cast
 import cv2
 import numpy as np
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 
 from face_detector.config import settings
 from face_detector.detection import DetectionFailure, FaceDetector, detect_face
@@ -136,6 +136,16 @@ def detect(
 @router.get("/detect", response_class=FileResponse, include_in_schema=False)
 def detect_form() -> FileResponse:
     return FileResponse(settings.static_dir / "index.html", media_type="text/html")
+
+
+@router.get("/", response_class=RedirectResponse, include_in_schema=False)
+def root() -> RedirectResponse:
+    return RedirectResponse("/detect")
+
+
+@router.get("/icon.png", response_class=FileResponse, include_in_schema=False)
+def icon() -> FileResponse:
+    return FileResponse(settings.static_dir / "icon.png", media_type="image/png")
 
 
 @router.get("/health")
