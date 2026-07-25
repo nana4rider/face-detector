@@ -1,0 +1,34 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Python: 仮想環境を作成",
+      "type": "shell",
+      "command": "python3 -m venv .venv",
+      "problemMatcher": []
+    },
+    {
+      "label": "Python: 依存パッケージをインストール",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/python",
+      "args": [
+        "-m",
+        "pip",
+        "install",
+        "-r",
+        "${workspaceFolder}/requirements.txt"
+      ],
+      "dependsOn": "Python: 仮想環境を作成",
+      "problemMatcher": []
+    },
+    {
+      "label": "OpenAPI: JSONを生成",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/python",
+      "args": [
+        "${workspaceFolder}/scripts/export_openapi.py"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}

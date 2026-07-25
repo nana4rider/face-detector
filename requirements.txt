@@ -1,5 +1,6 @@
-flask
-opencv-python-headless
-mediapipe
-numpy
-gunicorn
+fastapi
+mediapipe==0.10.21
+numpy<2
+opencv-contrib-python==4.11.0.86
+python-multipart
+uvicorn
