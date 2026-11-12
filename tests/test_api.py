@@ -126,6 +126,31 @@ def test_detect_returns_jpeg_and_dimensions(
     assert response.headers["x-image-height"] == "6"
 
 
+def test_detect_applies_partial_crop_coordinates(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seen_shape: tuple[int, ...] | None = None
+
+    def detect_cropped_image(image: np.ndarray, *_: object) -> DetectionSuccess:
+        nonlocal seen_shape
+        seen_shape = image.shape
+        return DetectionSuccess(
+            jpeg_bytes(image.shape[1], image.shape[0]), (image.shape[1], image.shape[0])
+        )
+
+    monkeypatch.setattr(api, "detect_face", detect_cropped_image)
+
+    response = api.detect(
+        file=upload_file(jpeg_bytes(width=960, height=1280)),
+        detector=detector_stub(),
+        startY="300",
+    )
+
+    assert isinstance(response, Response)
+    assert response.status_code == 200
+    assert seen_shape == (980, 960, 3)
+
+
 def test_detect_returns_detection_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

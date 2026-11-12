@@ -96,15 +96,26 @@ def detect(
 
         image_height, image_width = image.shape[:2]
         crop_values = (startX, startY, endX, endY)
-        if all(value not in (None, "") for value in crop_values):
-            start_x = max(0, min(optional_int(startX, "startX") or 0, image_width))
-            start_y = max(0, min(optional_int(startY, "startY") or 0, image_height))
+        if any(value not in (None, "") for value in crop_values):
+            parsed_start_x = optional_int(startX, "startX")
+            parsed_start_y = optional_int(startY, "startY")
+            parsed_end_x = optional_int(endX, "endX")
+            parsed_end_y = optional_int(endY, "endY")
+            start_x = max(
+                0, min(0 if parsed_start_x is None else parsed_start_x, image_width)
+            )
+            start_y = max(
+                0, min(0 if parsed_start_y is None else parsed_start_y, image_height)
+            )
             end_x = max(
-                start_x, min(optional_int(endX, "endX") or image_width, image_width)
+                start_x,
+                min(image_width if parsed_end_x is None else parsed_end_x, image_width),
             )
             end_y = max(
                 start_y,
-                min(optional_int(endY, "endY") or image_height, image_height),
+                min(
+                    image_height if parsed_end_y is None else parsed_end_y, image_height
+                ),
             )
             if start_x == end_x or start_y == end_y:
                 return error_response("切り抜き範囲が空です。", 400)
