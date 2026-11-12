@@ -92,6 +92,21 @@ def test_selects_highest_score_face() -> None:
     assert decoded.shape[:2] == (25, 40)
 
 
+def test_adds_padding_around_detected_face() -> None:
+    image = np.zeros((100, 100, 3), dtype=np.uint8)
+    detector = detector_with(detection(0.9, 20, 30, 40, 25))
+
+    result = detect_face(image, detector, score_threshold=0.5, min_size=0, padding=5)
+
+    assert isinstance(result, DetectionSuccess)
+    assert result.dimensions == (50, 35)
+    decoded = cv2.imdecode(
+        np.frombuffer(result.image_bytes, np.uint8), cv2.IMREAD_COLOR
+    )
+    assert decoded is not None
+    assert decoded.shape[:2] == (35, 50)
+
+
 def test_clamps_bounding_box_to_image() -> None:
     image = np.zeros((50, 60, 3), dtype=np.uint8)
     detector = detector_with(detection(0.9, -10, -5, 100, 80))
@@ -100,3 +115,13 @@ def test_clamps_bounding_box_to_image() -> None:
 
     assert isinstance(result, DetectionSuccess)
     assert result.dimensions == (60, 50)
+
+
+def test_clamps_padding_to_image_edges() -> None:
+    image = np.zeros((50, 60, 3), dtype=np.uint8)
+    detector = detector_with(detection(0.9, 0, 0, 20, 20))
+
+    result = detect_face(image, detector, score_threshold=0.5, min_size=0, padding=10)
+
+    assert isinstance(result, DetectionSuccess)
+    assert result.dimensions == (30, 30)

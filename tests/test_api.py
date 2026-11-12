@@ -88,6 +88,7 @@ def test_detect_rejects_invalid_image() -> None:
             "scoreThresholdは0から1の範囲で指定してください。",
         ),
         ({"minSize": "-1"}, "minSizeは0以上で指定してください。"),
+        ({"padding": "-1"}, "paddingは0以上で指定してください。"),
     ],
 )
 def test_detect_rejects_invalid_parameters(
@@ -124,6 +125,34 @@ def test_detect_returns_jpeg_and_dimensions(
     assert response.headers["content-type"] == "image/jpeg"
     assert response.headers["x-image-width"] == "8"
     assert response.headers["x-image-height"] == "6"
+
+
+def test_detect_passes_padding_to_face_detection(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seen_padding: int | None = None
+
+    def detect_with_padding(
+        _image: np.ndarray,
+        _detector: FaceDetector,
+        _score_threshold: float,
+        _min_size: int,
+        padding: int,
+    ) -> DetectionSuccess:
+        nonlocal seen_padding
+        seen_padding = padding
+        return DetectionSuccess(jpeg_bytes(8, 6), (8, 6))
+
+    monkeypatch.setattr(api, "detect_face", detect_with_padding)
+    response = api.detect(
+        file=upload_file(jpeg_bytes()),
+        detector=detector_stub(),
+        padding="5",
+    )
+
+    assert isinstance(response, Response)
+    assert response.status_code == 200
+    assert seen_padding == 5
 
 
 def test_detect_applies_partial_crop_coordinates(

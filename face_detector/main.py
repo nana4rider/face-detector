@@ -1,6 +1,7 @@
+import tomllib
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from importlib.metadata import version
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
@@ -11,7 +12,9 @@ from face_detector.api import error_response, router
 from face_detector.config import settings
 from face_detector.detection import FaceDetector
 
-APP_VERSION = version("face-detector")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+with (PROJECT_ROOT / "pyproject.toml").open("rb") as project_file:
+    APP_VERSION: str = tomllib.load(project_file)["project"]["version"]
 
 
 @asynccontextmanager

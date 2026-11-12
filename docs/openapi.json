@@ -3,7 +3,7 @@
   "info": {
     "title": "Face Detector",
     "description": "画像から最も信頼度の高い顔を検出して切り抜くAPIです。",
-    "version": "3.0.0"
+    "version": "3.2.0"
   },
   "paths": {
     "/detect": {
@@ -116,6 +116,18 @@
               }
             ],
             "title": "Minsize"
+          },
+          "padding": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Padding",
+            "description": "顔 bounding box の各辺に追加する余白（ピクセル）"
           },
           "startX": {
             "anyOf": [
