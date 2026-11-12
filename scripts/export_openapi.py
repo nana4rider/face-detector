@@ -2,6 +2,7 @@
 
 import json
 import sys
+import tomllib
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -10,10 +11,14 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from face_detector.main import app
 
+with (PROJECT_ROOT / "pyproject.toml").open("rb") as project_file:
+    PROJECT_VERSION: str = tomllib.load(project_file)["project"]["version"]
+
 
 def main() -> None:
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     schema = app.openapi()
+    schema["info"]["version"] = PROJECT_VERSION
     OUTPUT_PATH.write_text(
         json.dumps(schema, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
