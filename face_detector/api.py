@@ -102,6 +102,8 @@ def detect(
         if image is None:
             return error_response("入力画像を読み込めませんでした。", 400)
 
+        source_image = image
+        crop_origin = (0, 0)
         image_height, image_width = image.shape[:2]
         crop_values = (startX, startY, endX, endY)
         if any(value not in (None, "") for value in crop_values):
@@ -127,6 +129,7 @@ def detect(
             )
             if start_x == end_x or start_y == end_y:
                 return error_response("切り抜き範囲が空です。", 400)
+            crop_origin = (start_x, start_y)
             image = image[start_y:end_y, start_x:end_x]
 
         result = detect_face(
@@ -135,6 +138,8 @@ def detect(
             score_threshold,
             min_size,
             crop_padding,
+            source_image,
+            crop_origin,
         )
         if isinstance(result, DetectionFailure):
             return error_response(result.message, result.status_code)

@@ -59,6 +59,8 @@ def detect_face(
     score_threshold: float,
     min_size: int,
     padding: int = 0,
+    source_image: np.ndarray | None = None,
+    source_origin: tuple[int, int] = (0, 0),
 ) -> FaceDetectionOutcome:
     results = detector.process(image)
     if not results.detections:
@@ -83,11 +85,16 @@ def detect_face(
         return DetectionFailure("指定された条件を満たす顔が検出されませんでした。", 404)
 
     _, x, y, width, height = max(faces, key=lambda face: face[0])
-    x1 = max(0, x - padding)
-    y1 = max(0, y - padding)
-    x2 = min(image_width, x + width + padding)
-    y2 = min(image_height, y + height + padding)
-    face_image = image[y1:y2, x1:x2]
+    output_image = image if source_image is None else source_image
+    output_height, output_width = output_image.shape[:2]
+    origin_x, origin_y = source_origin
+    absolute_x = origin_x + x
+    absolute_y = origin_y + y
+    x1 = max(0, absolute_x - padding)
+    y1 = max(0, absolute_y - padding)
+    x2 = min(output_width, absolute_x + width + padding)
+    y2 = min(output_height, absolute_y + height + padding)
+    face_image = output_image[y1:y2, x1:x2]
     encoded, buffer = cv2.imencode(".jpg", face_image)
     if not encoded:
         return DetectionFailure("検出画像をJPEGに変換できませんでした。", 500)

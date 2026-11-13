@@ -138,6 +138,8 @@ def test_detect_passes_padding_to_face_detection(
         _score_threshold: float,
         _min_size: int,
         padding: int,
+        _source_image: np.ndarray,
+        _source_origin: tuple[int, int],
     ) -> DetectionSuccess:
         nonlocal seen_padding
         seen_padding = padding
@@ -159,10 +161,22 @@ def test_detect_applies_partial_crop_coordinates(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     seen_shape: tuple[int, ...] | None = None
+    seen_source_shape: tuple[int, ...] | None = None
+    seen_origin: tuple[int, int] | None = None
 
-    def detect_cropped_image(image: np.ndarray, *_: object) -> DetectionSuccess:
-        nonlocal seen_shape
+    def detect_cropped_image(
+        image: np.ndarray,
+        _detector: FaceDetector,
+        _score_threshold: float,
+        _min_size: int,
+        _padding: int,
+        source_image: np.ndarray,
+        source_origin: tuple[int, int],
+    ) -> DetectionSuccess:
+        nonlocal seen_shape, seen_source_shape, seen_origin
         seen_shape = image.shape
+        seen_source_shape = source_image.shape
+        seen_origin = source_origin
         return DetectionSuccess(
             jpeg_bytes(image.shape[1], image.shape[0]), (image.shape[1], image.shape[0])
         )
@@ -178,6 +192,8 @@ def test_detect_applies_partial_crop_coordinates(
     assert isinstance(response, Response)
     assert response.status_code == 200
     assert seen_shape == (980, 960, 3)
+    assert seen_source_shape == (1280, 960, 3)
+    assert seen_origin == (0, 300)
 
 
 def test_detect_returns_detection_error(

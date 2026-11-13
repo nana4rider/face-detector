@@ -125,3 +125,27 @@ def test_clamps_padding_to_image_edges() -> None:
 
     assert isinstance(result, DetectionSuccess)
     assert result.dimensions == (30, 30)
+
+
+def test_padding_can_extend_outside_detection_crop() -> None:
+    source_image = np.zeros((100, 120, 3), dtype=np.uint8)
+    detection_image = source_image[10:90, 40:100]
+    detector = detector_with(detection(0.9, 5, 20, 30, 30))
+
+    result = detect_face(
+        detection_image,
+        detector,
+        score_threshold=0.5,
+        min_size=0,
+        padding=20,
+        source_image=source_image,
+        source_origin=(40, 10),
+    )
+
+    assert isinstance(result, DetectionSuccess)
+    assert result.dimensions == (70, 70)
+    decoded = cv2.imdecode(
+        np.frombuffer(result.image_bytes, np.uint8), cv2.IMREAD_COLOR
+    )
+    assert decoded is not None
+    assert decoded.shape[:2] == (70, 70)
