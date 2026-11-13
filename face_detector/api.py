@@ -68,6 +68,7 @@ def detect(
         ),
     ] = None,
     minSize: Annotated[str | None, Form()] = None,
+    maxSize: Annotated[str | None, Form()] = None,
     padding: Annotated[
         str | None,
         Form(description="顔 bounding box の各辺に追加する余白（ピクセル）"),
@@ -92,6 +93,10 @@ def detect(
         min_size = optional_int(minSize, "minSize") or 0
         if min_size < 0:
             return error_response("minSizeは0以上で指定してください。", 400)
+
+        max_size = optional_int(maxSize, "maxSize")
+        if max_size is not None and max_size < 0:
+            return error_response("maxSizeは0以上で指定してください。", 400)
 
         crop_padding = optional_int(padding, "padding") or 0
         if crop_padding < 0:
@@ -140,6 +145,7 @@ def detect(
             crop_padding,
             source_image,
             crop_origin,
+            max_size=max_size,
         )
         if isinstance(result, DetectionFailure):
             return error_response(result.message, result.status_code)

@@ -3,7 +3,7 @@
   "info": {
     "title": "Face Detector",
     "description": "画像から最も信頼度の高い顔を検出して切り抜くAPIです。",
-    "version": "3.3.1"
+    "version": "3.4.0"
   },
   "paths": {
     "/detect": {
@@ -116,6 +116,17 @@
               }
             ],
             "title": "Minsize"
+          },
+          "maxSize": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maxsize"
           },
           "padding": {
             "anyOf": [

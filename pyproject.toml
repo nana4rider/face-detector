@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "face-detector"
-version = "3.3.1"
+version = "3.4.0"
 description = "画像から最も信頼度の高い顔を検出して切り抜くAPI"
 readme = "README.md"
 requires-python = ">=3.12"

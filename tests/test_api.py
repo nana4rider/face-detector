@@ -88,6 +88,7 @@ def test_detect_rejects_invalid_image() -> None:
             "scoreThresholdは0から1の範囲で指定してください。",
         ),
         ({"minSize": "-1"}, "minSizeは0以上で指定してください。"),
+        ({"maxSize": "-1"}, "maxSizeは0以上で指定してください。"),
         ({"padding": "-1"}, "paddingは0以上で指定してください。"),
     ],
 )
@@ -112,7 +113,7 @@ def test_detect_returns_jpeg_and_dimensions(
     monkeypatch.setattr(
         api,
         "detect_face",
-        lambda *_: DetectionSuccess(jpeg_bytes(8, 6), (8, 6)),
+        lambda *_, **__: DetectionSuccess(jpeg_bytes(8, 6), (8, 6)),
     )
 
     response = api.detect(
@@ -140,9 +141,11 @@ def test_detect_passes_padding_to_face_detection(
         padding: int,
         _source_image: np.ndarray,
         _source_origin: tuple[int, int],
+        max_size: int | None = None,
     ) -> DetectionSuccess:
         nonlocal seen_padding
         seen_padding = padding
+        assert max_size == 50
         return DetectionSuccess(jpeg_bytes(8, 6), (8, 6))
 
     monkeypatch.setattr(api, "detect_face", detect_with_padding)
@@ -150,6 +153,7 @@ def test_detect_passes_padding_to_face_detection(
         file=upload_file(jpeg_bytes()),
         detector=detector_stub(),
         padding="5",
+        maxSize="50",
     )
 
     assert isinstance(response, Response)
@@ -172,6 +176,7 @@ def test_detect_applies_partial_crop_coordinates(
         _padding: int,
         source_image: np.ndarray,
         source_origin: tuple[int, int],
+        max_size: int | None = None,
     ) -> DetectionSuccess:
         nonlocal seen_shape, seen_source_shape, seen_origin
         seen_shape = image.shape
@@ -202,7 +207,7 @@ def test_detect_returns_detection_error(
     monkeypatch.setattr(
         api,
         "detect_face",
-        lambda *_: DetectionFailure("顔が検出されませんでした。", 404),
+        lambda *_, **__: DetectionFailure("顔が検出されませんでした。", 404),
     )
 
     response = api.detect(

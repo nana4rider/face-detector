@@ -74,6 +74,31 @@ def test_filters_by_score_and_minimum_size() -> None:
     )
 
 
+def test_filters_by_maximum_width_or_height() -> None:
+    image = np.zeros((100, 100, 3), dtype=np.uint8)
+    detector = detector_with(
+        detection(0.95, 0, 0, 60, 30),
+        detection(0.9, 0, 0, 30, 60),
+        detection(0.8, 0, 0, 50, 50),
+    )
+
+    result = detect_face(image, detector, 0.5, 0, max_size=50)
+
+    assert isinstance(result, DetectionSuccess)
+    assert result.dimensions == (50, 50)
+
+
+def test_maximum_size_rejects_face_if_either_dimension_is_too_large() -> None:
+    image = np.zeros((100, 100, 3), dtype=np.uint8)
+    detector = detector_with(detection(0.9, 0, 0, 51, 40))
+
+    result = detect_face(image, detector, 0.5, 0, max_size=50)
+
+    assert result == DetectionFailure(
+        "指定された条件を満たす顔が検出されませんでした。", 404
+    )
+
+
 def test_selects_highest_score_face() -> None:
     image = np.zeros((60, 80, 3), dtype=np.uint8)
     detector = detector_with(

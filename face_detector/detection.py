@@ -61,6 +61,7 @@ def detect_face(
     padding: int = 0,
     source_image: np.ndarray | None = None,
     source_origin: tuple[int, int] = (0, 0),
+    max_size: int | None = None,
 ) -> FaceDetectionOutcome:
     results = detector.process(image)
     if not results.detections:
@@ -78,7 +79,13 @@ def detect_face(
         x2 = min(image_width, bbox.origin_x + bbox.width)
         y2 = min(image_height, bbox.origin_y + bbox.height)
         width, height = x2 - x1, y2 - y1
-        if score >= score_threshold and width >= min_size and height >= min_size:
+        within_max_size = max_size is None or (width <= max_size and height <= max_size)
+        if (
+            score >= score_threshold
+            and width >= min_size
+            and height >= min_size
+            and within_max_size
+        ):
             faces.append((score, x1, y1, width, height))
 
     if not faces:

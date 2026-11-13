@@ -24,6 +24,11 @@
           <input type="number" name="minSize" id="minSize" value="0" min="0" class="form-control">
         </div>
         <div class="mb-3">
+          <label for="maxSize" class="form-label">最大サイズ (ピクセル):</label>
+          <input type="number" name="maxSize" id="maxSize" min="0" class="form-control">
+          <div class="form-text">顔の幅または高さがこの値を超える候補は除外します。</div>
+        </div>
+        <div class="mb-3">
           <label for="padding" class="form-label">顔の切り抜き余白 (各辺のピクセル数):</label>
           <input type="number" name="padding" id="padding" value="0" min="0" class="form-control">
           <div class="form-text">例: 顔の幅が70pxの場合、padding=5で左右に5pxずつ追加します。</div>
