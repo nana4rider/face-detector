@@ -44,7 +44,7 @@ class FaceDetector:
         rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         media_pipe_image = mp.Image(
             image_format=mp.ImageFormat.SRGB,
-            data=np.ascontiguousarray(rgb_image),
+            data=rgb_image,
         )
         with self._lock:
             return self._detector.detect(media_pipe_image)
